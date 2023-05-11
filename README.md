@@ -1,3 +1,3 @@
 # google-search-automation
 
-Simple, lightweight selecinuim and flask based app to automate google search for SEO purpose.
+Simple, lightweight selenium and flask based app to automate google search for SEO purpose.
