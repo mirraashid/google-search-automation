@@ -1,3 +1,4 @@
+import json
 from flask import Flask, render_template, session, request
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -19,7 +20,7 @@ def handleSearch(searchTerm, website):
     # set up the driver
     chrome_options = Options()
     chrome_options.add_experimental_option("detach", True)
-    chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--headless")
 
     # driver = webdriver.Chrome("chromedriver")
     driver = webdriver.Chrome(options=chrome_options)
@@ -59,12 +60,34 @@ def handleSearch(searchTerm, website):
 def index():
     return 'Silence is Gold!', 200
 
+@app.route('/getConfig')
+def getConfig():
+    with open( "./websitesConfig.json"  )  as f:
+        menu_items_dict = json.load( f )
+        websitesData = menu_items_dict
+
+    return render_template('config.html' , data=json.dumps(websitesData, separators=(',', ':')) )
+
+@app.route('/updateConfig', methods = ['POST'])
+def updateConfig():
+    jsonBody = request.json
+    token = jsonBody.get('token')
+    if(not token or token != server_token):
+            return 'Please provide a valid token', 403
+
+    with open( "./websitesConfig.json" , 'w') as f:
+            f.write(jsonBody.get('data'))
+    return {}, 200
+
 @app.route('/searchKeywords', methods = ['POST'])
 def initiateSearch():
     try:
         jsonBody = request.json
         token = jsonBody.get('token')
-        searchData = jsonBody.get('searchData')
+        # searchData = jsonBody.get('searchData')
+        with open( "./websitesConfig.json"  )  as f:
+            menu_items_dict = json.load( f )
+            searchData = menu_items_dict
         responseBody = []
 
         if(not token or token != server_token):
