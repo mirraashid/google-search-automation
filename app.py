@@ -20,7 +20,7 @@ def handleSearch(searchTerm, website):
     # set up the driver
     chrome_options = Options()
     chrome_options.add_experimental_option("detach", True)
-    # chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")
 
     # driver = webdriver.Chrome("chromedriver")
     driver = webdriver.Chrome(options=chrome_options)
