@@ -56,11 +56,11 @@ def handleSearch(searchTerm, website):
     return {'status': 'Error while clicking the link', 'searchTerm': searchTerm, 'website': website, 'code': 500}
 
 
-@app.route('/')
+@app.route('/searchApi')
 def index():
     return 'Silence is Gold!', 200
 
-@app.route('/getConfig')
+@app.route('/searchApi/getConfig')
 def getConfig():
     with open( "./websitesConfig.json"  )  as f:
         menu_items_dict = json.load( f )
@@ -68,7 +68,7 @@ def getConfig():
 
     return render_template('config.html' , data=json.dumps(websitesData, separators=(',', ':')) )
 
-@app.route('/updateConfig', methods = ['POST'])
+@app.route('/searchApi/updateConfig', methods = ['POST'])
 def updateConfig():
     jsonBody = request.json
     token = jsonBody.get('token')
@@ -79,11 +79,10 @@ def updateConfig():
             f.write(jsonBody.get('data'))
     return {}, 200
 
-@app.route('/searchKeywords', methods = ['POST'])
+@app.route('/searchApi/searchKeywords', methods = ['GET'])
 def initiateSearch():
     try:
-        jsonBody = request.json
-        token = jsonBody.get('token')
+        token = request.args.get('token')
         # searchData = jsonBody.get('searchData')
         with open( "./websitesConfig.json"  )  as f:
             menu_items_dict = json.load( f )
@@ -97,7 +96,7 @@ def initiateSearch():
             return 'Empty list provided', 500
 
         for searchItem in searchData:
-            res = handleSearch(searchItem.get('searchTerm'), searchItem.get('wesbite'))
+            res = handleSearch(searchItem.get('searchTerm'), searchItem.get('website'))
             responseBody.append(res)
         
         print(responseBody)
@@ -117,5 +116,3 @@ def initiateSearch():
 
 if __name__ == '__main__':
 	app.run(port=8003, debug=True)
-
-# http://127.0.0.1:8000/?searchTerm=tampa bay mortgage calculator&website=tampabayflmortgage&token=cx34Sdl58Bhg9
