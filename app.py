@@ -169,6 +169,12 @@ def clear_stats_file():
     with open("stats.json", "w") as file:
         json.dump({}, file, indent=4)
 
+def reset_vars():
+    search_results = {
+        'success': [],
+        'failure': []
+    }
+    search_job_triggered = False
 
 def send_summary_email(stats):
     try:
@@ -238,6 +244,7 @@ def initiate_search():
 
 
         clear_stats_file()
+        reset_vars()
 
         return jsonify(search_results), 200
 
@@ -255,5 +262,9 @@ def initiate_search():
 
 
 if __name__ == '__main__':
-#  gunicorn -w 1 -b 127.0.0.1:8003 app:app
- app.run(port=8003, debug=True)
+#  gunicorn -w 1 -b 127.0.0.1:8000 app:app
+ app.run(port=8000, debug=True)
+ 
+#  http://54.146.71.198/searchApi/getConfig
+
+#  http://54.146.71.198/searchApi/searchKeywords?token=cx34Sdl58Bhg9
