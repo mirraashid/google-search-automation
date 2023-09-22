@@ -13,8 +13,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime,timedelta
 import time
-
-
+from multiprocessing import Process
 
 
 app = Flask(__name__)
@@ -32,6 +31,9 @@ search_results = {
     'success': [],
     'failure': []
 }
+
+num_runs = 120
+search_job_triggered = False
 
 def handleSearch(searchTerm, website):
     print(website)
@@ -112,8 +114,6 @@ def send_email(subject, body, attachment=None):
         print("Error sending email:", e)
 
 
-search_job_triggered = False
-
 def run_search_job(search_data, num_runs):
     run_interval = 1400 * 60 / num_runs  # Interval between each run in seconds =>  minutes each day * 60
     completed_runs = 0  # Counter to keep track of completed runs
@@ -145,6 +145,8 @@ def run_search_job(search_data, num_runs):
         if completed_runs == num_runs:
             # If all runs are completed, send the summary email
             send_summary_email(stats)
+            clear_stats_file()
+            reset_vars()
 
         # Wait for the specified interval before the next run
         time.sleep(run_interval)
@@ -170,6 +172,9 @@ def clear_stats_file():
         json.dump({}, file, indent=4)
 
 def reset_vars():
+    global search_results
+    global search_job_triggered
+
     search_results = {
         'success': [],
         'failure': []
@@ -203,6 +208,27 @@ def getConfig():
         websitesData = menu_items_dict
 
     return render_template('config.html' , data=json.dumps(websitesData, separators=(',', ':')) )
+
+@app.route('/searchApi/dashboard')
+def renderDashboard():
+    with open( "./stats.json"  )  as f:
+        menu_items_dict = json.load( f )
+        websitesData = menu_items_dict
+
+    return render_template('dashboard.html' , data=json.dumps(websitesData, separators=(',', ':')) )
+
+@app.route('/searchApi/stopCronJob', methods=['GET'])
+def stop_cron_job():
+    global search_job_triggered
+
+    search_job_triggered = False  
+
+    return jsonify({'message': 'Cron Job stopped successfully'}), 200
+
+@app.route('/searchApi/getCronStatus', methods = ['GET'])
+def getCronStatus():
+    global search_job_triggered
+    return jsonify({'cronStatus': search_job_triggered}), 200
 
 @app.route('/searchApi/updateConfig', methods = ['POST'])
 def updateConfig():
@@ -239,19 +265,18 @@ def initiate_search():
         if not search_job_triggered:
             # Call the function to schedule the job with desired parameters
             num_runs = 120  # Set the number of runs as needed
-            schedule_search_job(search_data, num_runs)
             search_job_triggered = True
+            search_process = Process(target=schedule_search_job, args=(search_data, num_runs))
+            search_process.start()
 
-
-        clear_stats_file()
-        reset_vars()
-
-        return jsonify(search_results), 200
+        return jsonify("Search Started"), 200
 
     except Exception as exp:
         subject = "Search Results Summary | Error"
         body = "Something went wrong"
         send_email(subject, body)
+        clear_stats_file()
+        reset_vars()
         return 'Something went wrong!', 500
 
     # driver.quit()
