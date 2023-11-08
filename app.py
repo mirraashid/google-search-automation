@@ -40,52 +40,56 @@ def handleSearch(searchTerm, website):
     if(not searchTerm or not website):
         return 'Missing arguments', 500
 
-    # set up the driver
-    chrome_options = Options()
-    chrome_options.add_experimental_option("detach", True)
-    chrome_options.add_argument("--headless") 
-    # driver = webdriver.Chrome("chromedriver")
-    driver = webdriver.Chrome("chromedriver", options=chrome_options)
-    # driver = webdriver.Chrome(options=chrome_options)
-    driver.maximize_window()
+    try:
+        # set up the driver
+        chrome_options = Options()
+        chrome_options.add_experimental_option("detach", True)
+        chrome_options.add_argument("--headless") 
+        # driver = webdriver.Chrome("chromedriver")
+        driver = webdriver.Chrome("chromedriver", options=chrome_options)
+        # driver = webdriver.Chrome(options=chrome_options)
+        driver.maximize_window()
 
-    # navigate to google
-    driver.get("https://www.google.com")
+        # navigate to google
+        driver.get("https://www.google.com")
 
-    # find the search bar element and enter the search term
-    search_bar = driver.find_element(By.NAME, "q")
-    search_bar.send_keys(searchTerm + Keys.RETURN)
+        # find the search bar element and enter the search term
+        search_bar = driver.find_element(By.NAME, "q")
+        search_bar.send_keys(searchTerm + Keys.RETURN)
 
-    # wait for the search results to load
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "search"))
-    )
+        # wait for the search results to load
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "search"))
+        )
 
-    # Find the website in the search results up to 4 pages
-    for page_number in range(1, 5):
-        # find the first search result and click on it
-        search_results = driver.find_elements(By.XPATH, "//div[@class='yuRUbf']//a")
+        # Find the website in the search results up to 4 pages
+        for page_number in range(1, 5):
+            # find the first search result and click on it
+            search_results = driver.find_elements(By.XPATH, "//div[@class='yuRUbf']//a")
 
-        
-        for result in search_results:
-            link = result.get_attribute('href')
-            print(link)
-            if website in link:
-                print('result found')
-                result.click()
-                driver.quit()
-                return {'status': 'Successfully clicked the link', 'searchTerm': searchTerm, 'website': website, 'page_number': page_number, 'code': 200}
-                break
+            
+            for result in search_results:
+                link = result.get_attribute('href')
+                print(link)
+                if website in link:
+                    print('result found')
+                    result.click()
+                    driver.quit()
+                    return {'status': 'Successfully clicked the link', 'searchTerm': searchTerm, 'website': website, 'page_number': page_number, 'code': 200}
+                    break
 
 
-        # move to the next page
-        next_page = driver.find_element(By.XPATH, f"//a[@aria-label='Page {page_number + 1}']")
-        next_page.click()
-        WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "search")))
-   
-    # something went wrong!
-    driver.quit()
-    return {'status': 'Error while clicking the link', 'searchTerm': searchTerm, 'website': website, 'code': 500}
+            # move to the next page
+            next_page = driver.find_element(By.XPATH, f"//a[@aria-label='Page {page_number + 1}']")
+            next_page.click()
+            WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "search")))
+    
+        # something went wrong!
+        driver.quit()
+        return {'status': 'Error while clicking the link', 'searchTerm': searchTerm, 'website': website, 'code': 500}
+    except Exception as e:
+        driver.quit()
+        return {'status': 'Error while clicking the link', 'searchTerm': searchTerm, 'website': website, 'code': 500}
 
 def send_email(subject, body, attachment=None):
     recipient_emails = ["cronjob@fidelityhomegroup.com", "mirrashidmir009@gmail.com"]
@@ -266,6 +270,7 @@ def initiate_search():
             # Call the function to schedule the job with desired parameters
             num_runs = 120  # Set the number of runs as needed
             search_job_triggered = True
+            
             search_process = Process(target=schedule_search_job, args=(search_data, num_runs))
             search_process.start()
 
@@ -290,6 +295,6 @@ if __name__ == '__main__':
 #  gunicorn -w 1 -b 127.0.0.1:8000 app:app
  app.run(port=8000, debug=True)
  
-#  http://54.146.71.198/searchApi/getConfig
+#  http://34.234.228.121/searchApi/getConfig
 
-#  http://54.146.71.198/searchApi/searchKeywords?token=cx34Sdl58Bhg9
+#  http://34.234.228.121/searchApi/searchKeywords?token=cx34Sdl58Bhg9
